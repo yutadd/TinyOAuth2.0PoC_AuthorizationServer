@@ -5,7 +5,6 @@ from util.http import sendSimpleResponse
 HTTP_PORT=80
 class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        self.send_header('x-frame-options','deny')
         match(self.path):
             case '/authorize':
                 authorizeUI(self)
