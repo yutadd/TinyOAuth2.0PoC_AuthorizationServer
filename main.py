@@ -1,7 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 from endpoints.authorize import authorizeUI
-from util.http import sendSimpleResponse
+from util.http import sendOAuth2ErrorResponse
 
 HTTP_PORT=8080
 class RequestHandler(BaseHTTPRequestHandler):
@@ -9,7 +9,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         if self.path.startswith('/authorize'):
             authorizeUI(self)
         else:
-            sendSimpleResponse(self,404,json.dumps({
+            sendOAuth2ErrorResponse(self,404,json.dumps({
             "error": "invalid_page",
             "error_description": "The authorization server does not support obtaining an authorization code using this method."
         }))
@@ -18,7 +18,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             case '/authorize':
                 authorizeUI(self)
             case _:
-                sendSimpleResponse(self,404,json.dumps({
+                sendOAuth2ErrorResponse(self,404,json.dumps({
             "error": "invalid_page",
             "error_description": "The authorization server does not support obtaining an authorization code using this method."
         }))
