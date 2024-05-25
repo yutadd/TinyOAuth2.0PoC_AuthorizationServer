@@ -1,27 +1,24 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
-from endpoints.authorize import authorizeUI
-from util.http import sendOAuth2ErrorResponse
+from endpoints.authorize import checkAndSendAuthorizeUI
+from util.http import returnErrorUIToUA
 
 HTTP_PORT=8080
 class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith('/authorize'):
-            authorizeUI(self)
+            checkAndSendAuthorizeUI(self)
         else:
-            sendOAuth2ErrorResponse(self,404,json.dumps({
-            "error": "invalid_page",
-            "error_description": "The authorization server does not support obtaining an authorization code using this method."
-        }))
+            returnErrorUIToUA(self,"invalid_page", "The authorization server does not support obtaining an authorization code using this method."
+        )
+    # authorizationにおいてはPOSTのサポートは義務ではない。(May)
     def do_POST(self):
        match(self.path):
             case '/authorize':
-                authorizeUI(self)
+                checkAndSendAuthorizeUI(self)
             case _:
-                sendOAuth2ErrorResponse(self,404,json.dumps({
-            "error": "invalid_page",
-            "error_description": "The authorization server does not support obtaining an authorization code using this method."
-        }))
+                returnErrorUIToUA(self, "invalid_page", "The authorization server does not support obtaining an authorization code using this method."
+        )
 def run(server_class, handler_class, port):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
