@@ -32,7 +32,7 @@ def sendRedirectAndErrorToClient(context: BaseHTTPRequestHandler,  error: str, e
     context.send_header('Location', error_response)
     context.end_headers()
 def sendRedirectAndSuccessToClient(context: BaseHTTPRequestHandler, redirect_uri: str , state: str ):
-# 認証＋認可に成功したので、クライアントにAuthorization Grantを送信する
+# TODO codeの時間制限を実装する
     success_response = f"{redirect_uri}?code=code_12345"
     if state:
         success_response += f"&state={state}"

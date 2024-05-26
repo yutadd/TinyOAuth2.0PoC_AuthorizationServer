@@ -6,10 +6,6 @@ from util.http import  returnErrorUIToUA, returnLoginUIToUA, sendRedirectAndSucc
 from util.request import checkParam
 from util.user import authenticate
 
-'''
-contentは
-application/x-www-form-urlencoded
-'''
 def checkAndAuthorizeAndSend(context:BaseHTTPRequestHandler)->bool:
     if context.headers.get('Content-Type') != 'application/x-www-form-urlencoded':
         returnErrorUIToUA(context, "invalid_request", "Content-Type must be application/x-www-form-urlencoded")
