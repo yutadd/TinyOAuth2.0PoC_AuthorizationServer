@@ -1,7 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 
 from util.http import returnErrorUIToUA, sendRedirectAndErrorToClient
-from util.registered import getClientById
+from util.client import getClientById
 
 
 def checkParam(context:BaseHTTPRequestHandler,query_components:dict[str, list[str]])->bool:
@@ -13,7 +13,7 @@ def checkParam(context:BaseHTTPRequestHandler,query_components:dict[str, list[st
         )
         return
     redirect_uri = query_components.get('redirect_uri', [None])[0]
-    if redirect_uri is None or not redirect_uri.startswith(registeredClient['redirect_uri']):
+    if redirect_uri is None or not redirect_uri.startswith(registeredClient[1]):
         returnErrorUIToUA(context=context, error="invalid_request",
                               error_description="The redirect_uri is invalid.")
         return False
@@ -25,7 +25,7 @@ def checkParam(context:BaseHTTPRequestHandler,query_components:dict[str, list[st
         return False
 
     requested_scope = query_components.get('scope', [None])[0]
-    if requested_scope is None or not set(requested_scope.split()).issubset(set(registeredClient['allowed_scopes'])):
+    if requested_scope is None or not set(requested_scope.split()).issubset(set(registeredClient[2].split(' '))):
         sendRedirectAndErrorToClient(context, "invalid_scope", "The requested scope is invalid, unknown, or malformed.",redirect_uri=redirect_uri,state=state)
         return False
     return True
