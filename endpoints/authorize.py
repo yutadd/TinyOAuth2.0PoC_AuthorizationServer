@@ -7,9 +7,6 @@ from util.request import checkParam
 from util.user import authenticate
 
 def checkAndAuthorizeAndSend(context:BaseHTTPRequestHandler)->bool:
-    if context.headers.get('Content-Type') != 'application/x-www-form-urlencoded':
-        returnErrorUIToUA(context, "invalid_request", "Content-Type must be application/x-www-form-urlencoded")
-        return
     length = int(context.headers.get('content-length'))
     field_data = context.rfile.read(length)
     query_components= parse.parse_qs(str(field_data,"UTF-8"))
@@ -29,9 +26,11 @@ def checkAndAuthorizeAndSend(context:BaseHTTPRequestHandler)->bool:
 response_type,client_id,state,redirect_uri,scope
 '''
 def checkAndSendAuthorizeUI(context:BaseHTTPRequestHandler):
-    if context.headers.get('Content-Type') != 'application/x-www-form-urlencoded':
-        returnErrorUIToUA(context, "invalid_request", "Content-Type must be application/x-www-form-urlencoded")
-        return
     query_components = parse_qs(urlparse(context.path).query)
     if checkParam(context,query_components):
         returnLoginUIToUA(context,query_components)
+def checkAndSendToken(context:BaseHTTPRequestHandler):
+    query_components = parse_qs(urlparse(context.path).query)
+    if query_components.get('grant_type', [None])[0]!="authorization_code":
+        returnErrorUIToUA(context,error="unknown grant_type")
+    
