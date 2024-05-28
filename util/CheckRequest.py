@@ -5,42 +5,30 @@ from util.http import returnErrorUIToUA, sendRedirectAndErrorToClient
 from util.client import getClientById
 from util.user import getUserByCode
 
-'''
-認可リクエスト
-  GET /authorize?response_type=code&client_id=s6BhdRkqt3&state=xyz
-        &success_redirect_uri=http://localhost/authorize_success&fail_redirect_uri=http://localhost/authorize_fail HTTP/1.1
-    Host: server.example.com
-'''
-def checkAuthorizationRequest(context: BaseHTTPRequestHandler, query_components: dict[str, list[str]]) -> bool:
-    registeredClient = getClientById(
-        query_components.get('client_id', [None])[0])
-    client_provided_state = query_components.get('state', [None])[0]
+
+def checkAuthorizationRequest(context: BaseHTTPRequestHandler, response_type:str,registeredClient,success_redirect_uri,fail_redirect_uri,requested_scope,client_provided_state) -> bool:
     if registeredClient is None:
         returnErrorUIToUA(context, "invalid_client_id",
                           "The client is not authorized to request an authorization code using this method.")
         return
-    success_redirect_uri = query_components.get('success_redirect_uri', [None])[0]
     print("CAR success_redirect_uri:",success_redirect_uri)
     if success_redirect_uri is None or not success_redirect_uri.startswith(registeredClient.redirect_prefix):
         returnErrorUIToUA(context=context, error="invalid_request",
                           error_detail="The success_redirect_uri is invalid.")
         return False
-    fail_redirect_uri = query_components.get('fail_redirect_uri', [None])[0]
     if fail_redirect_uri is None or not fail_redirect_uri.startswith(registeredClient.redirect_prefix):
         returnErrorUIToUA(context=context, error="invalid_request",
                           error_detail="The fail_redirect_uri is invalid.")
         return False
-    if query_components.get('response_type', [None])[0] != 'code':
+    if response_type != 'code':
         sendRedirectAndErrorToClient(context, "unsupported_response_type",
                                      "The authorization server does not support obtaining an authorization code using this method.", fail_redirect_uri, client_provided_state)
         return False
-    requested_scope = query_components.get('scope', [None])[0]
     if requested_scope is None or not set(requested_scope.split()).issubset(set(registeredClient.allowed_scope.split(' '))):
         sendRedirectAndErrorToClient(
             context, "invalid_scope", "The requested scope is invalid, unknown, or malformed.", redirect_uri=fail_redirect_uri, state=client_provided_state)
         return False
     return True
-
 
 '''
 アクセストークンリクエスト
