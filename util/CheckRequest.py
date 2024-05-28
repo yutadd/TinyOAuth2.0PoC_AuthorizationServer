@@ -2,7 +2,6 @@ import datetime
 from http.server import BaseHTTPRequestHandler
 
 from util.http import returnErrorUIToUA, sendRedirectAndErrorToClient
-from util.client import getClientById
 from util.user import getUserByCode
 
 
@@ -42,17 +41,7 @@ def checkAuthorizationRequest(context: BaseHTTPRequestHandler, response_type:str
 '''
 
 
-def checkAccessTokentRequest(context: BaseHTTPRequestHandler, query_components: dict[str, list[str]]) -> bool:
-    client_provided_code = query_components.get('code', [None])[0]
-    registeredClient = getClientById(
-        query_components.get('client_id', [None])[0])
-    success_redirect_uri = query_components.get('success_redirect_uri', [None])[0]
-    client_provided_grant_type = query_components.get('grant_type', [None])[0]
-    fail_redirect_uri = query_components.get('fail_redirect_uri', [None])[0]
-    print("CATR code, client: ", client_provided_code)
-    print("CATR success_redirect_uri client:", success_redirect_uri)
-    print("CATR redirect_uri registered:", registeredClient.redirect_prefix)
-    print(f"CATR allowed_scope client:", registeredClient.allowed_scope)
+def checkAccessTokentRequest(context: BaseHTTPRequestHandler, success_redirect_uri:str,registeredClient,fail_redirect_uri,client_provided_code,client_provided_grant_type) -> bool:
     if success_redirect_uri is None or not success_redirect_uri.startswith(registeredClient.redirect_prefix):
         returnErrorUIToUA(context=context, error="invalid_request",
                           error_detail="The success_redirect_uri is invalid.")
