@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import secrets
 def getClientById(client_id:str) -> bool:
     # SQLiteデータベースに接続
     db_path = './db/clients.db'
@@ -19,7 +20,7 @@ def getClientById(client_id:str) -> bool:
     conn.close()
     # ユーザーが見つかった場合はTrueを返す
     return user
-
+ 
 def seed_user_data():
     # SQLiteデータベースに接続
     conn = sqlite3.connect('./db/clients.db')

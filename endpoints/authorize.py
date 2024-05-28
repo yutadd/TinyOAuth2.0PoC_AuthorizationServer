@@ -2,35 +2,28 @@
 from http.server import BaseHTTPRequestHandler
 from urllib import parse
 from urllib.parse import urlparse, parse_qs
-from util.http import  returnErrorUIToUA, returnLoginUIToUA, sendRedirectAndSuccessToClient
-from util.request import checkParam
-from util.user import authenticate
+from util.CheckRequest import checkAccessTokentRequest, checkAuthorizationRequest
+from util.http import  returnErrorUIToUA, returnLoginUIToUA, sendRedirectAndCodeToClient
+from util.user import authenticate, issue_Access_Token
 
 def checkAndAuthorizeAndSend(context:BaseHTTPRequestHandler)->bool:
     length = int(context.headers.get('content-length'))
     field_data = context.rfile.read(length)
     query_components= parse.parse_qs(str(field_data,"UTF-8"))
     state=query_components.get('state', [None])[0]
-    if not checkParam(context,query_components):
+    if not checkAuthorizationRequest(context,query_components):
         return False
   # 認証情報の検証
     if not authenticate(query_components.get('username', [''])[0], query_components.get('password', [''])[0]):
         returnErrorUIToUA(context, "access_denied", "Invalid username or password.")
         return False
     redirect_uri = query_components.get('redirect_uri', [None])[0]
-    sendRedirectAndSuccessToClient(context=context,redirect_uri=redirect_uri,state=state)
-'''
-4.1.1を参考に
-クライアントからのパラメータを解析し、認可するかどうか確認するUIを返す。
-チェックするパラメータは以下の通り。
-response_type,client_id,state,redirect_uri,scope
-'''
+    sendRedirectAndCodeToClient(context=context,redirect_uri=redirect_uri,state=state,username=query_components.get('username', [''])[0])
 def checkAndSendAuthorizeUI(context:BaseHTTPRequestHandler):
     query_components = parse_qs(urlparse(context.path).query)
-    if checkParam(context,query_components):
+    if checkAuthorizationRequest(context,query_components):
         returnLoginUIToUA(context,query_components)
 def checkAndSendToken(context:BaseHTTPRequestHandler):
     query_components = parse_qs(urlparse(context.path).query)
-    if query_components.get('grant_type', [None])[0]!="authorization_code":
-        returnErrorUIToUA(context,error="unknown grant_type")
-    
+    if checkAccessTokentRequest(context,query_components):
+        issue_Access_Token(code=query_components.get('code', [''])[0])
