@@ -8,7 +8,8 @@ def returnLoginUIToUA(context: BaseHTTPRequestHandler,query_components: dict[str
     content = content.replace('{{client_id}}', query_components.get('client_id', [''])[0])
     content = content.replace('{{response_type}}', query_components.get('response_type', [''])[0])
     content = content.replace('{{state}}', query_components.get('state', [''])[0])
-    content = content.replace('{{redirect_uri}}', query_components.get('redirect_uri', [''])[0])
+    content = content.replace('{{success_redirect_uri}}', query_components.get('success_redirect_uri', [''])[0])
+    content = content.replace('{{fail_redirect_uri}}', query_components.get('fail_redirect_uri', [''])[0])
     content = content.replace('{{scope}}', query_components.get('scope', [''])[0])
     context.send_response(200)
     context.send_header('Content-Type', 'text/html; charset=utf-8')
@@ -43,9 +44,9 @@ def sendRedirectAndErrorToClient(context: BaseHTTPRequestHandler,  error: str, e
      Location: https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA
                &state=xyz
     '''
-def sendRedirectAndCodeToClient(context: BaseHTTPRequestHandler, redirect_uri: str , state: str ,username):
+def sendRedirectAndCodeToClient(context: BaseHTTPRequestHandler, success_redirect_uri: str , state: str ,username):
 # TODO codeの時間制限を実装する
-    success_response = f"{redirect_uri}?code={issue_Authorization_Code(username)}"
+    success_response = f"{success_redirect_uri}?code={issue_Authorization_Code(username)}"
     if state:
         success_response += f"&state={state}"
     context.send_response(302)

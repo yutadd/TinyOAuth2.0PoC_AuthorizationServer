@@ -7,10 +7,10 @@ import secrets
 
 class User:
     id: str
-    authorization_code: str
-    authorization_code_issued_at: datetime
-    access_token: str
-    access_token_issued_at: datetime
+    authorization_code: str | None
+    authorization_code_issued_at: datetime.datetime | None
+    access_token: str | None
+    access_token_issued_at: datetime.datetime | None
     username: str
     password: str
 
@@ -22,17 +22,40 @@ class User:
         self.access_token_issued_at = access_token_issued_at
         self.username = username
         self.password = password
-def getUserByUsername(username)->User:
+
+
+def getUserByUsername(username) -> User:
     # SQLiteデータベースに接続
     conn = sqlite3.connect('./db/users.db')
     cursor = conn.cursor()
     # ユーザー名を使ってユーザーを検索
-    print("searching user by code: ", username)
+    print("searching user by username: ", username)
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     user = cursor.fetchone()
-    modeledUser = User(user[0], user[1], datetime.datetime.strptime(user[2], '%Y-%m-%d %H:%M:%S'), user[3],
-    datetime.datetime.strptime(user[4], '%Y-%m-%d %H:%M:%S'),user[5],user[6])
+    modeledUser = None
+    if user[2] is None:
+        modeledUser = User(user[0], user[1], None, user[3],
+                           None, user[5], user[6])
+    elif user[4] is None:
+        modeledUser = User(user[0], user[1], datetime.datetime.strptime(user[2], '%Y-%m-%d %H:%M:%S'), user[3],
+                           None, user[5], user[6])
+    else:
+        User(user[0], user[1], datetime.datetime.strptime(user[2], '%Y-%m-%d %H:%M:%S'), user[3],
+                           datetime.datetime.strptime(user[4], '%Y-%m-%d %H:%M:%S'), user[5], user[6])
     return modeledUser
+
+def getUserByCode(code: str) -> User:
+    # SQLiteデータベースに接続
+    conn = sqlite3.connect('./db/users.db')
+    cursor = conn.cursor()
+    # ユーザー名を使ってユーザーを検索
+    print("searching user by code: ", code)
+    cursor.execute("SELECT * FROM users WHERE authorization_code = ?", (code,))
+    user = cursor.fetchone()
+    modeledUser = User(user[0], user[1], datetime.datetime.strptime(user[2], '%Y-%m-%d %H:%M:%S'), user[3],
+                       datetime.datetime.strptime(user[4], '%Y-%m-%d %H:%M:%S'), user[5], user[6])
+    return modeledUser
+
 
 def issue_Authorization_Code(username: str):
     code = secrets.token_hex(30)
@@ -60,6 +83,7 @@ def issue_Access_Token(username: str):
     # データベース接続を閉じる
     conn.close()
     return code
+
 
 def seed_user_data():
     db_path = './db/users.db'
@@ -95,5 +119,7 @@ def seed_user_data():
         conn.commit()
     # データベース接続を閉じる
     conn.close()
+
+
 # シード関数を呼び出す
 seed_user_data()

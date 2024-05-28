@@ -1,15 +1,23 @@
+from typing import List
 import sqlite3
 import os
 import secrets
 
 
-def getClientById(client_id: str) -> bool:
+
+class Client:
+    client_id:int
+    redirect_prefix:str
+    allowed_scope:List[str]
+    def __init__(self,client_id:str,redirect_prefix:str,allowed_scope:List[str]) -> None:
+        self.client_id=client_id
+        self.redirect_prefix=redirect_prefix
+        self.allowed_scope=allowed_scope
+def getClientById(client_id: str) -> Client:
     # SQLiteデータベースに接続
     db_path = './db/clients.db'
-
     # ディレクトリが存在しない場合は作成
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
-
     # SQLiteデータベースに接続
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -18,11 +26,11 @@ def getClientById(client_id: str) -> bool:
     cursor.execute("SELECT * FROM clients WHERE client_id = ?",
                    (str(client_id),))
     client = cursor.fetchone()
-    print("fetched client by id: ", client)
-    # データベース接続を閉じる
+        # データベース接続を閉じる
     conn.close()
-    # ユーザーが見つかった場合はTrueを返す
-    return client
+    modeledClient=Client(client[0],client[1],client[2])
+    print("fetched client by id: ", modeledClient)
+    return modeledClient
 
 
 def seed_user_data():
