@@ -1,18 +1,10 @@
-from typing import List
 import sqlite3
 import os
 import secrets
-
-
-
-class Client:
-    client_id:int
-    redirect_prefix:str
-    allowed_scope:List[str]
-    def __init__(self,client_id:str,redirect_prefix:str,allowed_scope:List[str]) -> None:
-        self.client_id=client_id
-        self.redirect_prefix=redirect_prefix
-        self.allowed_scope=allowed_scope
+from util.model.client import Client
+# クライアントID
+def AuthenticateClient(client_id:str,client_secret:str):
+    pass
 def getClientById(client_id: str) -> Client:
     # SQLiteデータベースに接続
     db_path = './db/clients.db'
@@ -42,6 +34,8 @@ def seed_user_data():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS clients (
             client_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client_name TEXT NOT NULL,
+            client_password TEXT NOT NULL,
             redirect_prefix TEXT NOT NULL,
             allowed_scope TEXT NOT NULL
         )
