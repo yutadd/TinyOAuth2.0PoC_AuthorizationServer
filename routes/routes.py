@@ -1,5 +1,5 @@
 from http.server import BaseHTTPRequestHandler
-from routes.authorize_code_flow.authorize import checkAndAuthorizeAndSend, checkAndSendAuthorizeUI, checkAndSendToken
+from routes.authorize_code_flow.authorization import checkAndAuthorizeAndSend, checkAndSendAuthorizeUI, checkAndSendToken
 from util.assembleResponse import returnErrorUIToUA
 class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
