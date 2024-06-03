@@ -71,3 +71,8 @@ def sendRedirectAndTokenToClient(context:BaseHTTPRequestHandler,code:str,redirec
     context.send_response(302)
     context.send_header('Location', success_response)
     context.end_headers()
+def return_sessionId(context: BaseHTTPRequestHandler, session_id: str):
+    # クッキーの設定
+    context.send_response(200)
+    cookie = f"session_id={session_id}; HttpOnly; Path=/"
+    context.send_header('Set-Cookie', cookie)

@@ -51,6 +51,38 @@ def issue_Authorization_Code(username: str):
     conn.close()
     return code
 
+def check_loggedin_by_sessionid(sessionid: str) -> bool:
+    # SQLiteデータベースに接続
+    conn = sqlite3.connect('./db/users.db')
+    cursor = conn.cursor()
+    # セッションIDを使ってユーザーを検索
+    print("searching user by sessionid: ", sessionid)
+    cursor.execute("SELECT * FROM users WHERE session_id = ?", (sessionid,))
+    user = cursor.fetchone()
+    # データベース接続を閉じる
+    conn.close()
+    # ユーザーが見つかった場合はTrueを返す
+    return user is not None
+def do_login(username: str, password: str) -> str:
+    # SQLiteデータベースに接続
+    conn = sqlite3.connect('./db/users.db')
+    cursor = conn.cursor()
+    
+    # ユーザー名を使ってユーザーを検索
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    user = cursor.fetchone()
+    
+    if user and bcrypt.checkpw(password.encode('utf-8'), user[6]):
+        # ログイン成功、セッションIDを生成
+        session_id = secrets.token_hex(16)
+        cursor.execute("UPDATE users SET session_id = ? WHERE username = ?", (session_id, username))
+        conn.commit()
+        conn.close()
+        return session_id
+    else:
+        # ログイン失敗
+        conn.close()
+        return None
 
 def issue_Access_Token(username: str):
     code = secrets.token_hex(30)
@@ -82,7 +114,8 @@ def seed_user_data():
             access_token TEXT,
             access_token_issued_at DATETIME,
             username TEXT NOT NULL,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            session_id TEXT
         )
     ''')
     cursor.execute('SELECT * FROM users WHERE username = ?', ('user01',))

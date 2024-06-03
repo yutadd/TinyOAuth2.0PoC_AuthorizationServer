@@ -1,8 +1,10 @@
 import datetime
 from http.server import BaseHTTPRequestHandler
 
+import bcrypt
+
 from util.assembleResponse import returnErrorUIToUA, sendRedirectAndErrorToClient
-from util.db.user import getUserByCode
+from util.db.user import check_loggedin_by_sessionid, getUserByCode, getUserByUsername
 
 
 def checkAuthorizationRequest(context: BaseHTTPRequestHandler, response_type:str,registeredClient,success_redirect_uri,fail_redirect_uri,requested_scope,client_provided_state) -> bool:
@@ -57,6 +59,22 @@ def checkAccessTokentRequest(context: BaseHTTPRequestHandler, success_redirect_u
     user = getUserByCode(client_provided_code)
     # Authorization Codeが発行されてから5分以内かどうかを確認
     if user and (datetime.datetime.now() - user.authorization_code_issued_at).total_seconds() <= 300 and user[1] == client_provided_code:
+        return True
+    else:
+        return False
+
+
+def isloggedIn(context: BaseHTTPRequestHandler) -> bool:
+    session_id = context.headers.get('Cookie', '').split('session_id=')[-1].split(';')[0]
+    if session_id and check_loggedin_by_sessionid(session_id):
+        return True
+    else:
+        return False
+
+
+def authenticate(username: str, password: str) -> bool:
+    user = getUserByUsername(username)
+    if user and bcrypt.checkpw(password.encode('utf-8'), user.password):
         return True
     else:
         return False

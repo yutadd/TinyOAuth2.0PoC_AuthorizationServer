@@ -36,7 +36,8 @@ def checkAndAuthorizeAndSendCode(context: BaseHTTPRequestHandler) -> bool:
     
     if not checkAuthorizationRequest(context=context, registeredClient=registeredClient,client_provided_state=client_provided_state,fail_redirect_uri=fail_redirect_uri,requested_scope=requested_scope,response_type=response_type,success_redirect_uri=success_redirect_uri):
         return False
-  # 認証情報の検証
+    sendRedirectAndCodeToClient(context=context, success_redirect_uri=success_redirect_uri,
+                                        state=state, username=username)
 
 
 def checkAndSendToken(context: BaseHTTPRequestHandler):
