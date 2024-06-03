@@ -1,8 +1,8 @@
 import datetime
 from http.server import BaseHTTPRequestHandler
 
-from util.http import returnErrorUIToUA, sendRedirectAndErrorToClient
-from util.user import getUserByCode
+from util.assembleResponse import returnErrorUIToUA, sendRedirectAndErrorToClient
+from util.db.user import getUserByCode
 
 
 def checkAuthorizationRequest(context: BaseHTTPRequestHandler, response_type:str,registeredClient,success_redirect_uri,fail_redirect_uri,requested_scope,client_provided_state) -> bool:

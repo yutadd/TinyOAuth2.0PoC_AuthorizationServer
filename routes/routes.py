@@ -1,6 +1,6 @@
 from http.server import BaseHTTPRequestHandler
-from endpoints.authorize import checkAndAuthorizeAndSend, checkAndSendAuthorizeUI, checkAndSendToken
-from util.http import returnErrorUIToUA
+from routes.authorize_code_flow.authorize import checkAndAuthorizeAndSend, checkAndSendAuthorizeUI, checkAndSendToken
+from util.assembleResponse import returnErrorUIToUA
 class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith('/authorize'):

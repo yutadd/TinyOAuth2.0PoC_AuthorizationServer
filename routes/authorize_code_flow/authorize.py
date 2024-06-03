@@ -1,14 +1,14 @@
 
-import datetime
+
 from http.server import BaseHTTPRequestHandler
 from urllib import parse
 from urllib.parse import urlparse, parse_qs
 
 import bcrypt
 from util.CheckRequest import checkAccessTokentRequest, checkAuthorizationRequest
-from util.client import getClientById
-from util.http import returnErrorUIToUA, returnLoginUIToUA, sendRedirectAndCodeToClient
-from util.user import  getUserByUsername, issue_Access_Token
+from util.db.client import getClientById
+from util.assembleResponse import returnErrorUIToUA, returnLoginUIToUA, sendRedirectAndCodeToClient
+from util.db.user import  getUserByUsername, issue_Access_Token
 
 '''
 TODO:ここですべての引数をクエリから取り出すようにする

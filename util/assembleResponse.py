@@ -1,6 +1,6 @@
 from http.server import BaseHTTPRequestHandler
 
-from util.user import issue_Authorization_Code
+from util.db.user import issue_Authorization_Code
 # クライアント認証は、basic認証で、usernameには、クライアントIDを使用し、passwordにはclient_secretを使用する。
 def returnLoginUIToUA(context: BaseHTTPRequestHandler,client_id,response_type,state,success_redirect_uri,fail_redirect_uri,scope):
     with open('template/authorize.html', 'r', encoding='utf-8') as file:
