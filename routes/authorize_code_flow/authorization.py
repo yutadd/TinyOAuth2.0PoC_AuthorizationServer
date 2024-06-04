@@ -7,8 +7,8 @@ from urllib.parse import urlparse, parse_qs
 import bcrypt
 from util.CheckRequest import checkAccessTokentRequest, checkAuthorizationRequest
 from util.db.client import getClientById
-from util.assembleResponse import returnErrorUIToUA, sendRedirectAndCodeToClient
-from util.db.user import  getUserByUsername, issue_Access_Token
+from util.assembleResponse import returnAuthorizeUIToUA, sendRedirectAndCodeToClient
+from util.db.user import issue_Access_Token
 
 '''
 TODO:ここですべての引数をクエリから取り出すようにする
@@ -31,14 +31,21 @@ def checkAndAuthorizeAndSendCode(context: BaseHTTPRequestHandler) -> bool:
     client_provided_state = query_components.get('state', [None])[0]
     state = query_components.get('state', [None])[0]
     response_type=query_components.get('response_type', [None])[0]
-    username=query_components.get('username', [''])[0]
-    password=query_components.get('password', [''])[0]
-    
+    session_id = context.headers.get('Cookie', '').split('session_id=')[-1].split(';')[0]
     if not checkAuthorizationRequest(context=context, registeredClient=registeredClient,client_provided_state=client_provided_state,fail_redirect_uri=fail_redirect_uri,requested_scope=requested_scope,response_type=response_type,success_redirect_uri=success_redirect_uri):
         return False
     sendRedirectAndCodeToClient(context=context, success_redirect_uri=success_redirect_uri,
-                                        state=state, username=username)
-
+                                        state=state, session_id=session_id)
+def SendAuthorizationUI(context: BaseHTTPRequestHandler):
+    query_components = parse_qs(urlparse(context.path).query)
+    client_id=query_components.get('client_id', [None])[0]
+    success_redirect_uri = query_components.get(
+        'success_redirect_uri', [None])[0]
+    fail_redirect_uri = query_components.get('fail_redirect_uri', [None])[0]
+    requested_scope = query_components.get('scope', [None])[0]
+    state = query_components.get('state', [None])[0]
+    response_type = query_components.get('response_type', [None])[0]
+    returnAuthorizeUIToUA(context=context,client_id=client_id,fail_redirect_uri=fail_redirect_uri,response_type=response_type,scope=requested_scope,state=state,success_redirect_uri=success_redirect_uri)
 
 def checkAndSendToken(context: BaseHTTPRequestHandler):
     query_components = parse_qs(urlparse(context.path).query)

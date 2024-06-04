@@ -8,6 +8,10 @@ from util.db.user import check_loggedin_by_sessionid, getUserByCode, getUserByUs
 
 
 def checkAuthorizationRequest(context: BaseHTTPRequestHandler, response_type:str,registeredClient,success_redirect_uri,fail_redirect_uri,requested_scope,client_provided_state) -> bool:
+    if not isloggedIn(context):
+        returnErrorUIToUA(context, "invalid_login",
+                          "you have to login first before authorize.")
+        return
     if registeredClient is None:
         returnErrorUIToUA(context, "invalid_client_id",
                           "The client is not authorized to request an authorization code using this method.")

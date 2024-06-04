@@ -3,6 +3,20 @@ from http.server import BaseHTTPRequestHandler
 from util.db.user import issue_Authorization_Code
 # クライアント認証は、basic認証で、usernameには、クライアントIDを使用し、passwordにはclient_secretを使用する。
 def returnAuthenticateUIToUA(context: BaseHTTPRequestHandler,client_id,response_type,state,success_redirect_uri,fail_redirect_uri,scope):
+    with open('template/authenticate.html', 'r', encoding='utf-8') as file:
+        content = file.read()
+    # パラメータをHTMLに埋め込む
+    content = content.replace('{{client_id}}', client_id)
+    content = content.replace('{{response_type}}', response_type)
+    content = content.replace('{{state}}', state)
+    content = content.replace('{{success_redirect_uri}}', success_redirect_uri)
+    content = content.replace('{{fail_redirect_uri}}', fail_redirect_uri)
+    content = content.replace('{{scope}}', scope)
+    context.send_response(200)
+    context.send_header('Content-Type', 'text/html; charset=utf-8')
+    context.end_headers()
+    context.wfile.write(bytes(content, 'utf-8'))
+def returnAuthorizeUIToUA(context: BaseHTTPRequestHandler,client_id,response_type,state,success_redirect_uri,fail_redirect_uri,scope):
     with open('template/authorize.html', 'r', encoding='utf-8') as file:
         content = file.read()
     # パラメータをHTMLに埋め込む
