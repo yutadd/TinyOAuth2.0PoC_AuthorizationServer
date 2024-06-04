@@ -18,7 +18,7 @@ def getClientById(client_id: str) -> Client:
     client = cursor.fetchone()
         # データベース接続を閉じる
     conn.close()
-    modeledClient=Client(client[0],client[1],client[2])
+    modeledClient=Client(client[0],client[1],client[2],client[3].split(','))
     print("fetched client by id: ", modeledClient)
     return modeledClient
 

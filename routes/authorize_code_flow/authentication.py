@@ -1,7 +1,6 @@
 # UI & login api
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
-from util.CheckRequest import checkAuthorizationRequest
 from util.db.client import getClientById
 from util.assembleResponse import return_sessionId_and_redirect, returnErrorUIToUA, returnAuthenticateUIToUA, sendRedirectAndCodeToClient
 from util.db.user import do_login
@@ -38,11 +37,11 @@ def processLoginAndRedirectToAuthorize(context: BaseHTTPRequestHandler):
     username = query_components.get('username', [None])[0]
     password = query_components.get('password', [None])[0]
     session_id=do_login(username, password)
-    if session_id is not None:
+    if session_id is None:
         returnErrorUIToUA(context, "access_denied",
                             "Invalid username or password.")
     else:
-        return_sessionId_and_redirect(context,session_id)
+        return_sessionId_and_redirect(context,session_id,post_data)
 
 # クライアント認証はトークンエンドポイントでのみ行う
 #   # if auth_header:

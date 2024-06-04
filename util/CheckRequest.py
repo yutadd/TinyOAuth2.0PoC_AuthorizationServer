@@ -4,11 +4,12 @@ from http.server import BaseHTTPRequestHandler
 import bcrypt
 
 from util.assembleResponse import returnErrorUIToUA, sendRedirectAndErrorToClient
-from util.db.user import check_loggedin_by_sessionid, getUserByCode, getUserByUsername
+from util.db.user import check_loggedin_by_sessionid,getUserByCode
 
 
 def checkAuthorizationRequest(context: BaseHTTPRequestHandler, response_type:str,registeredClient,success_redirect_uri,fail_redirect_uri,requested_scope,client_provided_state) -> bool:
-    if not isloggedIn(context):
+    session_id = context.headers.get('Cookie', '').split('session_id=')[-1].split(';')[0]
+    if not check_loggedin_by_sessionid(session_id):
         returnErrorUIToUA(context, "invalid_login",
                           "you have to login first before authorize.")
         return
@@ -29,7 +30,7 @@ def checkAuthorizationRequest(context: BaseHTTPRequestHandler, response_type:str
         sendRedirectAndErrorToClient(context, "unsupported_response_type",
                                      "We support only authorization", fail_redirect_uri, client_provided_state)
         return False
-    if requested_scope is None or not set(requested_scope.split()).issubset(set(registeredClient.allowed_scope.split(' '))):
+    if requested_scope is None or not set(requested_scope.split()).issubset(set(registeredClient.allowed_scope)):
         sendRedirectAndErrorToClient(
             context, "invalid_scope", "The requested scope is invalid, unknown, or malformed.", redirect_uri=fail_redirect_uri, state=client_provided_state)
         return False
@@ -68,14 +69,6 @@ def checkAccessTokentRequest(context: BaseHTTPRequestHandler, success_redirect_u
 def isloggedIn(context: BaseHTTPRequestHandler) -> bool:
     session_id = context.headers.get('Cookie', '').split('session_id=')[-1].split(';')[0]
     if session_id and check_loggedin_by_sessionid(session_id):
-        return True
-    else:
-        return False
-
-
-def authenticate(username: str, password: str) -> bool:
-    user = getUserByUsername(username)
-    if user and bcrypt.checkpw(password.encode('utf-8'), user.password):
         return True
     else:
         return False

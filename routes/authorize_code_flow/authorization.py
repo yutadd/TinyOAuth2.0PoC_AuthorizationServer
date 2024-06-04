@@ -8,7 +8,7 @@ import bcrypt
 from util.CheckRequest import checkAccessTokentRequest, checkAuthorizationRequest
 from util.db.client import getClientById
 from util.assembleResponse import returnAuthorizeUIToUA, sendRedirectAndCodeToClient
-from util.db.user import issue_Access_Token
+from util.db.user import getUserBySessionId, issue_Access_Token
 
 '''
 TODO:ここですべての引数をクエリから取り出すようにする
@@ -20,9 +20,7 @@ TODO:ここですべての引数をクエリから取り出すようにする
     Host: server.example.com
 '''
 def checkAndAuthorizeAndSendCode(context: BaseHTTPRequestHandler) -> bool:
-    length = int(context.headers.get('content-length'))
-    field_data = context.rfile.read(length)
-    query_components = parse.parse_qs(str(field_data, "UTF-8"))
+    query_components = parse_qs(urlparse(context.path).query)
     registeredClient = getClientById(
     query_components.get('client_id', [None])[0])
     success_redirect_uri = query_components.get('success_redirect_uri', [None])[0]
@@ -35,7 +33,7 @@ def checkAndAuthorizeAndSendCode(context: BaseHTTPRequestHandler) -> bool:
     if not checkAuthorizationRequest(context=context, registeredClient=registeredClient,client_provided_state=client_provided_state,fail_redirect_uri=fail_redirect_uri,requested_scope=requested_scope,response_type=response_type,success_redirect_uri=success_redirect_uri):
         return False
     sendRedirectAndCodeToClient(context=context, success_redirect_uri=success_redirect_uri,
-                                        state=state, session_id=session_id)
+                                        state=state,username=getUserBySessionId(session_id).username)
 def SendAuthorizationUI(context: BaseHTTPRequestHandler):
     query_components = parse_qs(urlparse(context.path).query)
     client_id=query_components.get('client_id', [None])[0]

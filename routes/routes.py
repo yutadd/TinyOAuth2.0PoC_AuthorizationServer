@@ -8,7 +8,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             check_loggedIn_and_redirect(self)
         elif self.path.startswith('/authorize/ask/login'):
             SendAuthenticateUI(self)
-        elif self.path.startswith('/authorize/ask/login'):
+        elif self.path.startswith('/authorize/ask/authorize'):
             SendAuthorizationUI(self)
         elif  self.path.startswith('/authorize/act/authorize'):
             checkAndAuthorizeAndSendCode(self)

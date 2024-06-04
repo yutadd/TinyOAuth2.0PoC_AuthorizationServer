@@ -16,7 +16,7 @@ def returnAuthenticateUIToUA(context: BaseHTTPRequestHandler,client_id,response_
     context.send_header('Content-Type', 'text/html; charset=utf-8')
     context.end_headers()
     context.wfile.write(bytes(content, 'utf-8'))
-def returnAuthorizeUIToUA(context: BaseHTTPRequestHandler,client_id,response_type,state,success_redirect_uri,fail_redirect_uri,scope):
+def returnAuthorizeUIToUA(context: BaseHTTPRequestHandler,client_id:str,response_type:str,state:str,success_redirect_uri:str,fail_redirect_uri:str,scope:str):
     with open('template/authorize.html', 'r', encoding='utf-8') as file:
         content = file.read()
     # パラメータをHTMLに埋め込む
@@ -59,7 +59,7 @@ def sendRedirectAndErrorToClient(context: BaseHTTPRequestHandler,  error: str, e
      Location: https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA
                &state=xyz
     '''
-def sendRedirectAndCodeToClient(context: BaseHTTPRequestHandler, success_redirect_uri: str , state: str ,username):
+def sendRedirectAndCodeToClient(context: BaseHTTPRequestHandler, success_redirect_uri: str , state: str ,username:str):
 # TODO codeの時間制限を実装する
     success_response = f"{success_redirect_uri}?code={issue_Authorization_Code(username)}"
     if state:
@@ -85,10 +85,12 @@ def sendRedirectAndTokenToClient(context:BaseHTTPRequestHandler,code:str,redirec
     context.send_response(302)
     context.send_header('Location', success_response)
     context.end_headers()
-def return_sessionId_and_redirect(context: BaseHTTPRequestHandler, session_id: str):
+def return_sessionId_and_redirect(context: BaseHTTPRequestHandler, session_id: str,post_data:str):
     # クッキーの設定
     context.send_response(302)
+    paramstr = post_data.decode('utf-8')
     cookie = f"session_id={session_id}; HttpOnly; Path=/"
     context.send_header('Set-Cookie', cookie)
-    context.send_header('Location', 'http://localhost:8080/authorize/ask')
+    context.send_header('Location', f'http://localhost:8080/authorize/ask/authorize?{paramstr}')
     context.end_headers()
+

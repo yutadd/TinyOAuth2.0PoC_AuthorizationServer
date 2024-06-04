@@ -5,13 +5,13 @@ import os
 import secrets
 from util.model.user import User
 
-def getUserByUsername(username) -> User:
+def getUserBySessionId(session_id) -> User:
     # SQLiteデータベースに接続
     conn = sqlite3.connect('./db/users.db')
     cursor = conn.cursor()
     # ユーザー名を使ってユーザーを検索
-    print("searching user by username: ", username)
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    print("searching user by session_id: ", session_id)
+    cursor.execute("SELECT * FROM users WHERE session_id = ?", (session_id,))
     user = cursor.fetchone()
     modeledUser = None
     if user[2] is None:
@@ -71,8 +71,9 @@ def do_login(username: str, password: str) -> str:
     # ユーザー名を使ってユーザーを検索
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     user = cursor.fetchone()
-    
+    print(user,username,password)
     if user and bcrypt.checkpw(password.encode('utf-8'), user[6]):
+        print("login success")
         # ログイン成功、セッションIDを生成
         session_id = secrets.token_hex(16)
         cursor.execute("UPDATE users SET session_id = ? WHERE username = ?", (session_id, username))
@@ -81,6 +82,7 @@ def do_login(username: str, password: str) -> str:
         return session_id
     else:
         # ログイン失敗
+        print("login failed")
         conn.close()
         return None
 
