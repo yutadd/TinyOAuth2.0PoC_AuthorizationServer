@@ -23,7 +23,7 @@ def checkAuthorizationRequest(context: BaseHTTPRequestHandler, response_type:str
         return False
     if response_type != 'code':
         sendRedirectAndErrorToClient(context, "unsupported_response_type",
-                                     "The authorization server does not support obtaining an authorization code using this method.", fail_redirect_uri, client_provided_state)
+                                     "We support only authorization", fail_redirect_uri, client_provided_state)
         return False
     if requested_scope is None or not set(requested_scope.split()).issubset(set(registeredClient.allowed_scope.split(' '))):
         sendRedirectAndErrorToClient(
@@ -37,12 +37,9 @@ def checkAuthorizationRequest(context: BaseHTTPRequestHandler, response_type:str
      Host: server.example.com
      Content-Type: application/x-www-form-urlencoded
 
-     grant_type=authorization_code&code=SplxlOBeZQQYbYS6WxSbIA
-     &success_redirect_uri=http://localhost/access_token_success&fail_redirect_uri=http://localhost/access_token_fail
+     grant_type=authorization_code&code=SplxlOBeZQQYbYS6WxSbIA&success_redirect_uri=http://localhost/access_token_success&fail_redirect_uri=http://localhost/access_token_fail
 コンフィデンシャルクライアント以外はclient_idも必須
 '''
-
-
 def checkAccessTokentRequest(context: BaseHTTPRequestHandler, success_redirect_uri:str,registeredClient,fail_redirect_uri,client_provided_code,client_provided_grant_type) -> bool:
     if success_redirect_uri is None or not success_redirect_uri.startswith(registeredClient.redirect_prefix):
         returnErrorUIToUA(context=context, error="invalid_request",

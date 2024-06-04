@@ -3,7 +3,7 @@
 <head>
     <meta charset='utf-8'>
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>Authorization serverの認可決定画面だよ</title>
+    <title>Authorization serverの認証画面だよ</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
 </head>
 <body>
@@ -14,8 +14,18 @@
     <input type="hidden" name="success_redirect_uri" value="{{success_redirect_uri}}">
     <input type="hidden" name="fail_redirect_uri" value="{{fail_redirect_uri}}">
     <input type="hidden" name="scope" value="{{scope}}">
+    <div>
+        <label for="username">ユーザー名:</label>
+        <input type="text" id="username" name="username" required>
+    </div>
+    <div>
+        <label for="password">パスワード:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    ヒント: user01:P@ssw0rd
+    <div>
         <button type="reset">キャンセル</button>
-        <button type="submit">認可する</button>
+        <button type="submit">ログインする</button>
     </div>
 </form>
 </body>

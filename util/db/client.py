@@ -35,7 +35,7 @@ def authenticate_client(client_id: str, client_secret: str) -> bool:
         return True
     else:
         return False
-def seed_user_data():
+def seed_client_data():
     # SQLiteデータベースに接続
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -44,8 +44,7 @@ def seed_user_data():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS clients (
             client_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            client_name TEXT NOT NULL,
-            client_password TEXT NOT NULL,
+            client_secret TEXT NOT NULL,
             redirect_prefix TEXT NOT NULL,
             allowed_scope TEXT NOT NULL
         )
@@ -53,10 +52,10 @@ def seed_user_data():
     cursor.execute('SELECT * FROM clients WHERE client_id = ?', ('1'))
     user = cursor.fetchone()
     if not user:
-        cursor.execute('INSERT INTO clients (redirect_prefix,allowed_scope) VALUES ( ?, ?)',
-                       ('http://localhost/', 'read'))
+        cursor.execute('INSERT INTO clients (client_secret,redirect_prefix,allowed_scope) VALUES ( ?,?, ?)',
+                       ('P@ssw0rd','http://localhost/', 'read'))
         # 変更をコミットしてデータベース接続を閉じる
         conn.commit()
         conn.close()
 # シード関数を呼び出す
-seed_user_data()
+seed_client_data()

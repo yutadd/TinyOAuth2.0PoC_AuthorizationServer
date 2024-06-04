@@ -1,6 +1,6 @@
 from http.server import HTTPServer
 
-from routes import RequestHandler
+from routes.routes import RequestHandler
 
 HTTP_PORT=8080
 

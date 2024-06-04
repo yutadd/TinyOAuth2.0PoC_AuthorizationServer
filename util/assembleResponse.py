@@ -2,7 +2,7 @@ from http.server import BaseHTTPRequestHandler
 
 from util.db.user import issue_Authorization_Code
 # クライアント認証は、basic認証で、usernameには、クライアントIDを使用し、passwordにはclient_secretを使用する。
-def returnLoginUIToUA(context: BaseHTTPRequestHandler,client_id,response_type,state,success_redirect_uri,fail_redirect_uri,scope):
+def returnAuthenticateUIToUA(context: BaseHTTPRequestHandler,client_id,response_type,state,success_redirect_uri,fail_redirect_uri,scope):
     with open('template/authorize.html', 'r', encoding='utf-8') as file:
         content = file.read()
     # パラメータをHTMLに埋め込む
@@ -71,8 +71,10 @@ def sendRedirectAndTokenToClient(context:BaseHTTPRequestHandler,code:str,redirec
     context.send_response(302)
     context.send_header('Location', success_response)
     context.end_headers()
-def return_sessionId(context: BaseHTTPRequestHandler, session_id: str):
+def return_sessionId_and_redirect(context: BaseHTTPRequestHandler, session_id: str):
     # クッキーの設定
-    context.send_response(200)
+    context.send_response(302)
     cookie = f"session_id={session_id}; HttpOnly; Path=/"
     context.send_header('Set-Cookie', cookie)
+    context.send_header('Location', 'http://localhost:8080/authorize/ask')
+    context.end_headers()
