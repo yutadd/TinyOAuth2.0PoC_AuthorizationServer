@@ -89,7 +89,7 @@ def return_sessionId_and_redirect(context: BaseHTTPRequestHandler, session_id: s
     # クッキーの設定
     context.send_response(302)
     paramstr = post_data.decode('utf-8')
-    cookie = f"session_id={session_id}; HttpOnly; Path=/"
+    cookie = f"AuthorizationServerSession_id={session_id}; HttpOnly; Path=/"
     context.send_header('Set-Cookie', cookie)
     context.send_header('Location', f'http://localhost:8080/authorize/ask/authorize?{paramstr}')
     context.end_headers()

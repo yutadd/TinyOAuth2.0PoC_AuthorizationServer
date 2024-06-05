@@ -19,7 +19,7 @@ def SendAuthenticateUI(context: BaseHTTPRequestHandler):
 
 def check_loggedIn_and_redirect(context: BaseHTTPRequestHandler):
     query_components = parse_qs(urlparse(context.path).query)
-    session_id = query_components.get('session_id', [None])[0]
+    session_id = query_components.get('AuthorizationServerSession_id', [None])[0]
     query_string = context.path.split('?', 1)[1] if '?' in context.path else ''
     if session_id and check_loggedin_by_sessionid(session_id):
         context.send_response(302)
