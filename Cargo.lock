@@ -472,6 +472,7 @@ dependencies = [
  "http-body-util",
  "hyper",
  "hyper-util",
+ "once_cell",
  "tokio",
 ]
 
