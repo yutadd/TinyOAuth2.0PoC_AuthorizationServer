@@ -19,7 +19,7 @@ def SendAuthenticateUI(context: BaseHTTPRequestHandler):
 
 def check_loggedIn_and_redirect(context: BaseHTTPRequestHandler):
     query_components = parse_qs(urlparse(context.path).query)
-    session_id = query_components.get('AuthorizationServerSession_id', [None])[0]
+    session_id = context.headers.get('Cookie', '').split('AuthorizationServerSession_id=')[-1].split(';')[0]
     query_string = context.path.split('?', 1)[1] if '?' in context.path else ''
     if session_id and check_loggedin_by_sessionid(session_id):
         context.send_response(302)
@@ -39,30 +39,6 @@ def processLoginAndRedirectToAuthorize(context: BaseHTTPRequestHandler):
     session_id=do_login(username, password)
     if session_id is None:
         returnErrorUIToUA(context, "access_denied",
-                            "Invalid username or password.")
+            "Invalid username or password.")
     else:
         return_sessionId_and_redirect(context,session_id,post_data)
-
-# クライアント認証はトークンエンドポイントでのみ行う
-#   # if auth_header:
-    #     auth_type, auth_info = auth_header.split(' ', 1)
-    #     if auth_type.lower() == 'basic':
-    #         decoded_auth_info = base64.b64decode(auth_info).decode('utf-8')
-    #         client_id, password = decoded_auth_info.split(':', 1)
-    #         print(f"Username: {client_id}, Password: {password}")
-    #         if authenticate_client(client_id, password):
-    #             if checkAuthorizationRequest(context=context, success_redirect_uri=success_redirect_uri, client_provided_state=client_provided_state, fail_redirect_uri=fail_redirect_uri, registeredClient=registeredClient, requested_scope=requested_scope, response_type=response_type, response_type=response_type):
-    #                 returnAuthorizationUIToUA(context=context, scope=requested_scope, fail_redirect_uri=fail_redirect_uri,
-    #                                   client_id=registeredClient.client_id, success_redirect_uri=success_redirect_uri, response_type=response_type, state=state)
-    #             else:
-    #                 returnErrorUIToUA(
-    #                     context, "invalid_params", "there are any params we don't recognize in your request.")
-    #         else:
-    #             returnErrorUIToUA(context, "invalid_client",
-    #                               "Client_id you provided is not recognized.")
-    #     else:
-    #         returnErrorUIToUA(context, "invalid_authentication_method",
-    #                           "We support only basic authentication method")
-    # else:
-    #     returnErrorUIToUA(context, "invalid_authentication_header",
-    #                       "we support only confidential client.")

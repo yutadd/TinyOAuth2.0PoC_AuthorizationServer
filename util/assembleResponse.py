@@ -43,7 +43,7 @@ def returnErrorUIToUA(context: BaseHTTPRequestHandler,error:str,error_detail:str
 '''
 エラー応答
 HTTP/1.1 302 Found
-   Location: https://client.example.com/cb?error=access_denied&state=xyz
+Location: https://client.example.com/cb?error=access_denied&state=xyz
 '''
 def sendRedirectAndErrorToClient(context: BaseHTTPRequestHandler,  error: str, error_description: str, redirect_uri: str , state: str ):
     # エラーメッセージをリダイレクトURIに含める
@@ -55,31 +55,13 @@ def sendRedirectAndErrorToClient(context: BaseHTTPRequestHandler,  error: str, e
     context.end_headers()
     '''
     認可応答
-     HTTP/1.1 302 Found
-     Location: https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA
-               &state=xyz
+    HTTP/1.1 302 Found
+    Location: https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA
+    &state=xyz
     '''
 def sendRedirectAndCodeToClient(context: BaseHTTPRequestHandler, success_redirect_uri: str , state: str ,username:str):
 # TODO codeの時間制限を実装する
     success_response = f"{success_redirect_uri}?code={issue_Authorization_Code(username)}"
-    if state:
-        success_response += f"&state={state}"
-    context.send_response(302)
-    context.send_header('Location', success_response)
-    context.end_headers()
-'''
-Access Token Response
-  {
-       "access_token":"2YotnFZFEjr1zCsicMWpAA",
-       "token_type":"example",
-       "expires_in":3600,
-       "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA",
-       "example_parameter":"example_value"
-     }
-'''
-def sendRedirectAndTokenToClient(context:BaseHTTPRequestHandler,code:str,redirect_uri:str,state:str):
-    # TODO codeの時間制限を実装する
-    success_response = f"{redirect_uri}?access_token={issue_Authorization_Code(code)}"
     if state:
         success_response += f"&state={state}"
     context.send_response(302)

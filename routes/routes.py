@@ -1,20 +1,23 @@
 from http.server import BaseHTTPRequestHandler
 from routes.authorize_code_flow.authentication import SendAuthenticateUI, check_loggedIn_and_redirect, processLoginAndRedirectToAuthorize
-from routes.authorize_code_flow.authorization import SendAuthorizationUI, checkAndAuthorizeAndSendCode, checkAndSendToken
+from routes.authorize_code_flow.authorization import SendAuthorizationUI, checkAndAuthorizeAndSendCode
 from util.assembleResponse import returnErrorUIToUA
 class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path.startswith('/authorize/check_loggedin'):
+        path=self.path.split('?')[0].split('#')[0]
+        if path=='/authorize/check_loggedin':
             check_loggedIn_and_redirect(self)
-        elif self.path.startswith('/authorize/ask/login'):
+        elif path=='/authorize/ask/login':
             SendAuthenticateUI(self)
-        elif self.path.startswith('/authorize/ask/authorize'):
+        elif path=='/authorize/ask/authorize':
             SendAuthorizationUI(self)
-        elif  self.path.startswith('/authorize/act/authorize'):
+        elif  path=='/authorize/act/authorize':
             checkAndAuthorizeAndSendCode(self)
         else:
             returnErrorUIToUA(self,"invalid_page", "this path is not on routes.")
     def do_POST(self):
-        if self.path.startswith("/authorize/act/login"):
+        path=self.path.split('?')[0].split('#')[0]
+        if path=="/authorize/act/login":
             processLoginAndRedirectToAuthorize(self)
-        # TODO: TokenエンドポイントはPOSTを推奨している(?)
+        elif self.path.startswith('/act/exchangeToken'):
+            pass
