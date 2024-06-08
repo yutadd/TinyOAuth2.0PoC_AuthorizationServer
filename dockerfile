@@ -8,4 +8,4 @@ RUN cargo install cargo-watch
 EXPOSE 8081
 
 # Set the command to run the server
-CMD ["cargo", "watch", "-x", "run"]
+CMD ["./start_authorization_server.sh"]

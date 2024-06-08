@@ -21,6 +21,7 @@ pub struct ExampleClient {
     pub allowed_scope: Vec<String>,
 }
 pub struct ExampleUser {
+    pub user_name:String,
     pub user_id: String,
     pub user_password: String,
 }
@@ -45,7 +46,7 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| Config {
         act_login: "/act/login".to_string(),
     },
     db: Db {
-        username: "myuser".to_string(),
+        username: "root".to_string(),
         password: "P@ssw0rd".to_string(),
         database: "authorization_server".to_string(),
         server_domain: "mariadb".to_string(),
@@ -58,6 +59,7 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| Config {
         allowed_scope: vec!["read".to_string()],
     },
     example_user: ExampleUser {
+        user_name:"DotPiano".to_string(),
         user_id: "user01".to_string(),
         user_password: "P@ssw0rd".to_string(),
     },

@@ -14,7 +14,7 @@ pub fn data_seeding()->Result<(),mysql::Error>{
 
     // クエリを実行
     conn.query_drop(
-        r"CREATE TABLE users (
+        r"CREATE TABLE if not exists users (
             id TEXT NOT NULL UNIQUE,
             authorization_code TEXT,
             authorization_code_expires_at DATETIME,
@@ -28,7 +28,7 @@ pub fn data_seeding()->Result<(),mysql::Error>{
             session_expires_at DATETIME
         )"
     )?;
-    conn.query_drop(r"CREATE TABLE clients (
+    conn.query_drop(r"CREATE TABLE if not exists clients (
         client_id TEXT NOT NULL UNIQUE,
         client_secret TEXT NOT NULL,
         redirect_prefix TEXT NOT NULL,
@@ -37,15 +37,20 @@ pub fn data_seeding()->Result<(),mysql::Error>{
 
     // データを挿入
     conn.exec_drop(
-        r"INSERT INTO users (username,password) VALUES (:username,:password)",
+        r"INSERT INTO users (id, username, password)
+          SELECT :id, :username, :password
+          WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = :id)",
         params! {
-            "username" => &CONFIG.example_user.user_id,
+            "username" => &CONFIG.example_user.user_name,
+            "id"=>&CONFIG.example_user.user_id,
             "password"=>&CONFIG.example_user.user_password
         },
     )?;
 
     conn.exec_drop(
-        r"INSERT INTO clients (client_id,client_secret,redirect_prefix,allowed_scope) VALUES (:client_id,:client_secret,:redirect_prefix,:allowed_scope)",
+        r"INSERT INTO clients (client_id, client_secret, redirect_prefix, allowed_scope)
+          SELECT :client_id, :client_secret, :redirect_prefix, :allowed_scope
+          WHERE NOT EXISTS (SELECT 1 FROM clients WHERE client_id = :client_id)",
         params! {
             "client_id"=>&CONFIG.example_client.client_id,
             "client_secret" => &CONFIG.example_client.client_secret,
@@ -54,7 +59,7 @@ pub fn data_seeding()->Result<(),mysql::Error>{
         },
     )?;
     // データを取得
-    let selected_users: Vec<(u32, String)> = conn.query("SELECT id, username FROM users")?;
+    let selected_users: Vec<(String, String)> = conn.query("SELECT id, username FROM users")?;
 
     for user in selected_users {
         println!("ID: {}, Name: {}", user.0, user.1);
