@@ -2418,11 +2418,13 @@ name = "tiny_oauth2_poc_a11n_server"
 version = "0.0.1"
 dependencies = [
  "cargo-watch",
+ "chrono",
  "http-body-util",
  "hyper",
  "hyper-util",
  "mysql",
  "once_cell",
+ "serde",
  "tokio",
 ]
 

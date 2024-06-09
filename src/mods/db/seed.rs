@@ -1,68 +1,47 @@
-use mysql::*;
-use mysql::prelude::*;
 use crate::mods::config::config::CONFIG;
+use crate::mods::db::models::{Client, User};
+use crate::mods::db::repository::Repository;
+use mysql::*;
 
-pub fn data_seeding()->Result<(),mysql::Error>{
+pub fn data_seeding() -> Result<(), mysql::Error> {
     // 接続文字列を設定
-    let url = format!("mysql://{}:{}@{}:{}/{}",CONFIG.db.username,CONFIG.db.password,CONFIG.db.server_domain,CONFIG.db.server_port,CONFIG.db.database);
+    let url = format!(
+        "mysql://{}:{}@{}:{}/{}",
+        CONFIG.db.username,
+        CONFIG.db.password,
+        CONFIG.db.server_domain,
+        CONFIG.db.server_port,
+        CONFIG.db.database
+    );
 
-    // プールを作成
-    let pool = Pool::new(Opts::from_url(url.as_str()).expect("Invalid DB URL. Check config->db params"))?;
+    // リポジトリを作成
+    let repository = Repository::new(&url)?;
 
-    // コネクションを取得
-    let mut conn = pool.get_conn()?;
+    // テーブルを作成
+    repository.create_tables()?;
 
-    // クエリを実行
-    conn.query_drop(
-        r"CREATE TABLE if not exists users (
-            id TEXT NOT NULL UNIQUE,
-            authorization_code TEXT,
-            authorization_code_expires_at DATETIME,
-            access_token TEXT,
-            access_token_expires_at DATETIME,
-            refresh_token TEXT,
-            refresh_token_expires_at DATETIME,
-            username TEXT NOT NULL UNIQUE,
-            password BLOB NOT NULL,
-            session_id TEXT,
-            session_expires_at DATETIME
-        )"
-    )?;
-    conn.query_drop(r"CREATE TABLE if not exists clients (
-        client_id TEXT NOT NULL UNIQUE,
-        client_secret TEXT NOT NULL,
-        redirect_prefix TEXT NOT NULL,
-        allowed_scope TEXT NOT NULL
-    )");
+    // ユーザーを挿入
+    let user = User::new(
+        CONFIG.example_user.user_id.clone(),
+        CONFIG.example_user.user_name.clone(),
+        CONFIG.example_user.user_password.clone(),
+    );
+    repository.insert_user(&user)?;
 
-    // データを挿入
-    conn.exec_drop(
-        r"INSERT INTO users (id, username, password)
-          SELECT :id, :username, :password
-          WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = :id)",
-        params! {
-            "username" => &CONFIG.example_user.user_name,
-            "id"=>&CONFIG.example_user.user_id,
-            "password"=>&CONFIG.example_user.user_password
-        },
-    )?;
+    // クライアントを挿入
+    let client = Client {
+        client_id: CONFIG.example_client.client_id.clone(),
+        client_secret: CONFIG.example_client.client_secret.clone(),
+        redirect_prefix: CONFIG.example_client.redirect_prefix.clone(),
+        allowed_scope: CONFIG.example_client.allowed_scope.join(" "),
+    };
+    repository.insert_client(&client)?;
 
-    conn.exec_drop(
-        r"INSERT INTO clients (client_id, client_secret, redirect_prefix, allowed_scope)
-          SELECT :client_id, :client_secret, :redirect_prefix, :allowed_scope
-          WHERE NOT EXISTS (SELECT 1 FROM clients WHERE client_id = :client_id)",
-        params! {
-            "client_id"=>&CONFIG.example_client.client_id,
-            "client_secret" => &CONFIG.example_client.client_secret,
-            "redirect_prefix"=>&CONFIG.example_client.redirect_prefix,
-            "allowed_scope"=>&CONFIG.example_client.allowed_scope.join(" ")
-        },
-    )?;
-    // データを取得
-    let selected_users: Vec<(String, String)> = conn.query("SELECT id, username FROM users")?;
-
+    // データを取得して表示
+    let selected_users = repository.get_users()?;
     for user in selected_users {
-        println!("ID: {}, Name: {}", user.0, user.1);
+        println!("ID: {}, Name: {}", user.id, user.username);
     }
+
     Ok(())
 }
