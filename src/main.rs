@@ -10,6 +10,7 @@ use crate::mods::db::seed::data_seeding;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    println!("starting server!");
     let seedingresult=data_seeding();
     if seedingresult.is_ok(){
         let addr = SocketAddr::from(([0, 0, 0, 0], CONFIG.self_server_port));

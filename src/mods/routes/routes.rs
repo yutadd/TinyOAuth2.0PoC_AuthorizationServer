@@ -4,17 +4,17 @@ use http_body_util::Full;
 use hyper::body::Bytes;
 use hyper::{Request, Response};
 use crate::mods::config::config::CONFIG;
-use crate::mods::services::authentication::redirect_by_login_state;
+use crate::mods::services::authentication::{ask_login, redirect_by_login_state};
 pub async fn hello(request: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
     let path = request.uri().path().to_string();
     let method = request.method().clone();
     if method.as_str()=="GET"{
         if path==CONFIG.endpoints.check_loggedin {
-
+            return Ok(redirect_by_login_state(&request))
         }else if path == CONFIG.endpoints.ask_login{
-
+            return Ok(ask_login(&request));
         }else if path == CONFIG.endpoints.ask_authorization{
-
+            
         }else if path==CONFIG.endpoints.act_authorization{
 
         }else{
@@ -29,5 +29,5 @@ pub async fn hello(request: Request<hyper::body::Incoming>) -> Result<Response<F
 
     }
     
-    Ok(redirect_by_login_state(request))
+    Ok(redirect_by_login_state(&request))
 }

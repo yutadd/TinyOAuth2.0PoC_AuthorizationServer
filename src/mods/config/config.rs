@@ -12,6 +12,7 @@ pub struct Db {
     pub database: String,
     pub server_domain: String,
     pub server_port: u16,
+    pub database_url:String
 }
 pub struct ExampleClient {
     // clientの設定と一致さすべし
@@ -25,19 +26,30 @@ pub struct ExampleUser {
     pub user_id: String,
     pub user_password: String,
 }
+pub fn create_database_url(username: &str, password: &str, domain: &str, port: u16, database: &str) -> String {
+    format!("mysql://{}:{}@{}:{}/{}", username, password, domain, port, database)
+}
 pub struct Config {
     pub server_address: String,
     pub self_server_port: u16,
+    pub session_id_name:String,
     pub endpoints: Endpoints,
     pub db: Db,
     pub example_client: ExampleClient,
     pub example_user: ExampleUser,
 }
 
-pub static CONFIG: Lazy<Config> = Lazy::new(|| Config {
+pub static CONFIG: Lazy<Config> = Lazy::new(|| {
+    let username = "root".to_string();
+    let password = "P@ssw0rd".to_string();
+    let database = "authorization_server".to_string();
+    let server_domain = "mariadb".to_string();
+    let server_port = 3306;
+    print!("initializing config");
+    Config {
     server_address: "localhost".to_string(),
     self_server_port: 8081,
-
+    session_id_name:"authorization_server_session_id".to_string(),
     endpoints: Endpoints {
         check_loggedin: "/chk/loggedin".to_string(),
         ask_login: "/ask/login".to_string(),
@@ -46,11 +58,12 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| Config {
         act_login: "/act/login".to_string(),
     },
     db: Db {
-        username: "root".to_string(),
-        password: "P@ssw0rd".to_string(),
-        database: "authorization_server".to_string(),
-        server_domain: "mariadb".to_string(),
+        username: username.clone(),
+        password: password.clone(),
+        database: database.clone(),
+        server_domain: server_domain.clone(),
         server_port: 3306,
+        database_url: create_database_url(&username, &password, &server_domain, server_port, &database),
     },
     example_client: ExampleClient {
         client_id: "123abcABC".to_string(),
@@ -63,4 +76,4 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| Config {
         user_id: "user01".to_string(),
         user_password: "P@ssw0rd".to_string(),
     },
-});
+}});

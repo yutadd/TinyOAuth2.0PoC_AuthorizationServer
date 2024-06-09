@@ -4,19 +4,12 @@ use crate::mods::db::repository::Repository;
 use mysql::*;
 
 pub fn data_seeding() -> Result<(), mysql::Error> {
-    // 接続文字列を設定
-    let url = format!(
-        "mysql://{}:{}@{}:{}/{}",
-        CONFIG.db.username,
-        CONFIG.db.password,
-        CONFIG.db.server_domain,
-        CONFIG.db.server_port,
-        CONFIG.db.database
-    );
-
     // リポジトリを作成
-    let repository = Repository::new(&url)?;
-
+    println!("initializing db");
+    println!("{:?}",CONFIG.self_server_port);
+    println!("↑database url");
+    let repository = Repository::new(CONFIG.db.database_url.as_str())?;
+    println!("repository initialized");
     // テーブルを作成
     repository.create_tables()?;
 

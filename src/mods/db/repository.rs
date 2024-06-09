@@ -108,4 +108,29 @@ impl Repository {
         )?;
         Ok(clients)
     }
+    pub fn is_session_valid(&self, session_id: &str) -> Result<bool, mysql::Error> {
+        let mut conn = self.pool.get_conn()?;
+        let result: Option<String> = conn.exec_first(
+            "SELECT id FROM users WHERE session_id = :session_id AND session_expires_at > :current_time",
+            params! {
+                "session_id" => session_id,
+                "current_time" => Utc::now().timestamp(),
+            },
+        )?;
+        Ok(result.is_some())
+    }
+    pub fn check_credential(&self,username:String,password:String)->Result<String,String>{
+    let mut conn = self.pool.get_conn().expect("DB error");
+    let result: Option<String> = conn.exec_first(
+        "SELECT id FROM users WHERE username = :username AND password = :password",
+        params! {
+            "username" => username,
+            "password" => password,
+        },
+    ).expect("DB error");
+    match result {
+        Some(user_id) => Ok(user_id),
+        None => Err("Invalid username or password".to_string()),
+    }
+    }
 }
