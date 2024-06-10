@@ -1,11 +1,14 @@
 use crate::mods::db::models::{Client, User};
+use bcrypt::{hash, verify, DEFAULT_COST};
 use chrono::Utc;
 use mysql::prelude::*;
 use mysql::*;
-use rand::Rng;
 use rand::distributions::Alphanumeric;
+use rand::Rng;
 use std::io::{Error, ErrorKind};
-use bcrypt::{hash, verify, DEFAULT_COST};
+
+use crate::mods::db::repository::params;
+
 pub struct Repository {
     pool: Pool,
 }
@@ -98,21 +101,12 @@ impl Repository {
         Ok(users)
     }
 
-    pub fn get_clients(&self) -> Result<Vec<Client>, mysql::Error> {
-        let mut conn = self.pool.get_conn()?;
-        let clients = conn.query_map(
-            "SELECT client_id, client_secret, redirect_prefix, allowed_scope FROM clients",
-            |(client_id, client_secret, redirect_prefix, allowed_scope)| Client {
-                client_id,
-                client_secret,
-                redirect_prefix,
-                allowed_scope,
-            },
-        )?;
-        Ok(clients)
-    }
     pub fn is_session_valid(&self, session_id: &str) -> Result<bool, mysql::Error> {
         let mut conn = self.pool.get_conn()?;
+        println!(
+            "checking session between {}  <=> {}",
+            session_id, "session_id on DB."
+        );
         let result: Option<String> = conn.exec_first(
             "SELECT id FROM users WHERE session_id = :session_id AND session_expires_at > :current_time",
             params! {
@@ -123,8 +117,7 @@ impl Repository {
         Ok(result.is_some())
     }
 
-    pub fn issue_session_id(&self, userid: String) -> Result<String,mysql::Error> {
-
+    pub fn issue_session_id(&self, userid: String) -> Result<String, mysql::Error> {
         let mut conn = self.pool.get_conn()?;
         let session_id: String = rand::thread_rng()
             .sample_iter(&Alphanumeric)
@@ -142,7 +135,11 @@ impl Repository {
         )?;
         Ok(session_id)
     }
-    pub fn check_credential(&self, username: String, password: String) -> Result<String, mysql::Error> {
+    pub fn check_credential(
+        &self,
+        username: String,
+        password: String,
+    ) -> Result<String, mysql::Error> {
         let mut conn = self.pool.get_conn()?;
         let stored_password: Option<(String, String)> = conn.exec_first(
             "SELECT id, password FROM users WHERE username = :username",
@@ -155,10 +152,90 @@ impl Repository {
                 if verify(&password, &stored_password).expect("Failed to verify password") {
                     Ok(user_id)
                 } else {
-                    Err(mysql::Error::from(Error::new(ErrorKind::NotFound, "Invalid credentials")))
+                    Err(mysql::Error::from(Error::new(
+                        ErrorKind::NotFound,
+                        "Invalid credentials",
+                    )))
                 }
-            },
-            None => Err(mysql::Error::from(Error::new(ErrorKind::NotFound, "Invalid credentials"))),
+            }
+            None => Err(mysql::Error::from(Error::new(
+                ErrorKind::NotFound,
+                "Invalid credentials",
+            ))),
         }
+    }
+    pub fn save_authorization_code(
+        &self,
+        session_id: &String,
+        code: &String,
+    ) -> Result<(), mysql::Error> {
+        let mut conn = self.pool.get_conn()?;
+        let user_id = self.get_user_id_by_session_id(session_id)?;
+        let expire_time = Utc::now().timestamp() + 600; // 10 minutes expiration time
+        conn.exec_drop(
+            "UPDATE users SET authorization_code = :code, authorization_code_expires_at = :expire_time WHERE id = :user_id",
+            params! {
+                "code" => &code,
+                "expire_time" => expire_time,
+                "user_id" => &user_id,
+            },
+        )?;
+        Ok(())
+    }
+    pub fn is_redirect_url_valid(
+        &self,
+        client_id: &String,
+        redirect_url: &String,
+    ) -> Result<bool, mysql::Error> {
+        let mut conn = self.pool.get_conn()?;
+        println!(
+            "checking_redirect_url:client_id:{},url:{}",
+            client_id, redirect_url
+        );
+        let allowed_prefix: Option<String> = conn.exec_first(
+            "SELECT redirect_prefix FROM clients WHERE client_id = :client_id",
+            params! {
+                "client_id" => client_id,
+            },
+        )?;
+
+        match allowed_prefix {
+            Some(prefix) => {
+                println!("checking redirect url {} <=>{}", redirect_url, &prefix);
+                Ok(redirect_url.starts_with(&prefix))
+            }
+            None => Ok(false),
+        }
+    }
+    pub fn is_scope_valid(&self, client_id: &String, scope: &String) -> Result<bool, mysql::Error> {
+        let mut conn = self.pool.get_conn()?;
+        let allowed_scope: Option<String> = conn.exec_first(
+            "SELECT allowed_scope FROM clients WHERE client_id = :client_id",
+            params! {
+                "client_id" => client_id,
+            },
+        )?;
+
+        match allowed_scope {
+            Some(allowed) => {
+                let allowed_scopes: Vec<&str> = allowed.split_whitespace().collect();
+                let requested_scopes: Vec<&str> = scope.split_whitespace().collect();
+                Ok(requested_scopes.iter().all(|s| allowed_scopes.contains(s)))
+            }
+            None => Ok(false),
+        }
+    }
+    pub fn get_user_id_by_session_id(
+        &self,
+        session_id: &String,
+    ) -> Result<Option<String>, mysql::Error> {
+        let mut conn = self.pool.get_conn()?;
+        let user_id: Option<String> = conn.exec_first(
+            "SELECT id FROM users WHERE session_id = :session_id",
+            params! {
+                "session_id" => session_id,
+            },
+        )?;
+        Ok(user_id)
     }
 }

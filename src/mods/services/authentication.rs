@@ -29,10 +29,12 @@ pub fn redirect_by_login_state(request: &Request<hyper::body::Incoming>) -> Resp
     }
 }
 pub fn ask_login(request: &Request<hyper::body::Incoming>) -> Response<Full<Bytes>> {
+    let uri = request.uri();
+    let query = uri.query().unwrap_or("");
     if !is_user_loggedin(request) {
         return_login_page(request)
     } else {
-        return_redirect_request(CONFIG.endpoints.ask_authorization.clone())
+        return_redirect_request(format!("{}?{}",CONFIG.endpoints.ask_authorization.clone(), query))
     }
 }
 

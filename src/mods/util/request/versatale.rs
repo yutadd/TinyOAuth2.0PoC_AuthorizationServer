@@ -19,6 +19,8 @@ fn url_decode(encoded: &str) -> String {
     percent_encoding::percent_decode_str(encoded).decode_utf8_lossy().into_owned()
 }
 use hyper::Uri;
+
+use crate::mods::config::config::CONFIG;
 pub fn get_query_params(uri: &Uri) -> HashMap<String, String> {
     uri.query()
         .unwrap_or("")
@@ -31,4 +33,20 @@ pub fn get_query_params(uri: &Uri) -> HashMap<String, String> {
             }
         })
         .collect()
+}
+pub fn get_session_id_from_request(request: &Request<hyper::body::Incoming>) -> Option<String> {
+    let headers = request.headers().clone();
+    if let Some(cookie) = headers.get("Cookie") {
+        let cookie_str = cookie.to_str().unwrap_or("");
+        if cookie_str.contains(CONFIG.session_id_name.as_str()) {
+            let splited = cookie_str.split(';');
+            for part in splited {
+                let trimmed = part.trim();
+                if trimmed.starts_with(CONFIG.session_id_name.as_str()) {
+                    return trimmed.split('=').nth(1).map(|s| s.to_string());
+                }
+            }
+        }
+    }
+    None
 }
