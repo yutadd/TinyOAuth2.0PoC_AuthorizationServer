@@ -1,7 +1,11 @@
-use mysql::*;
+use crate::mods::db::models::{Client, User};
+use chrono::Utc;
 use mysql::prelude::*;
-use crate::mods::db::models::{User, Client};
-use chrono::{NaiveDateTime, Utc};
+use mysql::*;
+use rand::Rng;
+use rand::distributions::Alphanumeric;
+use std::io::{Error, ErrorKind};
+use bcrypt::{hash, verify, DEFAULT_COST};
 pub struct Repository {
     pool: Pool,
 }
@@ -26,7 +30,7 @@ impl Repository {
                 password TEXT NOT NULL,
                 session_id TEXT,
                 session_expires_at BIGINT
-            )"
+            )",
         )?;
         conn.query_drop(
             r"CREATE TABLE if not exists clients (
@@ -34,13 +38,14 @@ impl Repository {
                 client_secret TEXT NOT NULL,
                 redirect_prefix TEXT NOT NULL,
                 allowed_scope TEXT NOT NULL
-            )"
+            )",
         )?;
         Ok(())
     }
 
     pub fn insert_user(&self, user: &User) -> Result<(), mysql::Error> {
         let mut conn = self.pool.get_conn()?;
+        let hashed_password = hash(&user.password, DEFAULT_COST).expect("Failed to hash password");
         conn.exec_drop(
             r"INSERT INTO users (id, username, password)
               SELECT :id, :username, :password
@@ -48,7 +53,7 @@ impl Repository {
             params! {
                 "id" => &user.id,
                 "username" => &user.username,
-                "password" => &user.password,
+                "password" => &hashed_password,
             },
         )?;
         Ok(())
@@ -97,13 +102,11 @@ impl Repository {
         let mut conn = self.pool.get_conn()?;
         let clients = conn.query_map(
             "SELECT client_id, client_secret, redirect_prefix, allowed_scope FROM clients",
-            |(client_id, client_secret, redirect_prefix, allowed_scope)| {
-                Client {
-                    client_id,
-                    client_secret,
-                    redirect_prefix,
-                    allowed_scope,
-                }
+            |(client_id, client_secret, redirect_prefix, allowed_scope)| Client {
+                client_id,
+                client_secret,
+                redirect_prefix,
+                allowed_scope,
             },
         )?;
         Ok(clients)
@@ -119,18 +122,43 @@ impl Repository {
         )?;
         Ok(result.is_some())
     }
-    pub fn check_credential(&self,username:String,password:String)->Result<String,String>{
-    let mut conn = self.pool.get_conn().expect("DB error");
-    let result: Option<String> = conn.exec_first(
-        "SELECT id FROM users WHERE username = :username AND password = :password",
-        params! {
-            "username" => username,
-            "password" => password,
-        },
-    ).expect("DB error");
-    match result {
-        Some(user_id) => Ok(user_id),
-        None => Err("Invalid username or password".to_string()),
+
+    pub fn issue_session_id(&self, userid: String) -> Result<String,mysql::Error> {
+
+        let mut conn = self.pool.get_conn()?;
+        let session_id: String = rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(30)
+            .map(char::from)
+            .collect();
+        let expire_time = Utc::now().timestamp() + 3600; // 1 hour expiration time
+        conn.exec_drop(
+            "UPDATE users SET session_id = :session_id, session_expires_at = :expire_time WHERE id = :userid",
+            params! {
+                "session_id" => &session_id,
+                "expire_time" => expire_time,
+                "userid" => &userid,
+            },
+        )?;
+        Ok(session_id)
     }
+    pub fn check_credential(&self, username: String, password: String) -> Result<String, mysql::Error> {
+        let mut conn = self.pool.get_conn()?;
+        let stored_password: Option<(String, String)> = conn.exec_first(
+            "SELECT id, password FROM users WHERE username = :username",
+            params! {
+                "username" => &username,
+            },
+        )?;
+        match stored_password {
+            Some((user_id, stored_password)) => {
+                if verify(&password, &stored_password).expect("Failed to verify password") {
+                    Ok(user_id)
+                } else {
+                    Err(mysql::Error::from(Error::new(ErrorKind::NotFound, "Invalid credentials")))
+                }
+            },
+            None => Err(mysql::Error::from(Error::new(ErrorKind::NotFound, "Invalid credentials"))),
+        }
     }
 }
