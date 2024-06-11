@@ -198,7 +198,7 @@ impl Repository {
                 "client_id" => client_id,
             },
         )?;
-
+    println!("[db/repository]user fetched:{}",allowed_prefix.is_some());
         match allowed_prefix {
             Some(prefix) => {
                 println!("checking redirect url {} <=>{}", redirect_url, &prefix);
@@ -252,22 +252,31 @@ pub fn client_authentication(&self, client_id: &String, client_secret: &String) 
         None => Ok(false),
     }
 }
-pub fn issue_token(&self, userid: String) -> Result<String, mysql::Error> {
+pub fn issue_token(&self, code: String) -> Result<(String, String), mysql::Error> {
     let mut conn = self.pool.get_conn()?;
-    let token: String = rand::thread_rng()
+    let access_token: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
         .take(30)
         .map(char::from)
         .collect();
-    let expire_time = Utc::now().timestamp() + 3600*24; // 1 hour expiration time
+    let refresh_token: String = rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(30)
+        .map(char::from)
+        .collect();
+    let access_token_expire_time = Utc::now().timestamp() + 3600; // 1 hour expiration time
+    let refresh_token_expire_time = Utc::now().timestamp() + 3600 * 24 * 30; // 30 days expiration time
+
     conn.exec_drop(
-        "UPDATE users SET session_id = :session_id, session_expires_at = :expire_time WHERE id = :userid",
+        "UPDATE users SET access_token = :access_token, access_token_expires_at = :access_token_expire_time, refresh_token = :refresh_token, refresh_token_expires_at = :refresh_token_expire_time WHERE authorization_code = :code",
         params! {
-            "session_id" => &token,
-            "expire_time" => expire_time,
-            "userid" => &userid,
+            "access_token" => &access_token,
+            "access_token_expire_time" => access_token_expire_time,
+            "refresh_token" => &refresh_token,
+            "refresh_token_expire_time" => refresh_token_expire_time,
+            "code" => &code,
         },
     )?;
-    Ok(token)
+    Ok((access_token, refresh_token))
 }
 }

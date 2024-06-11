@@ -2,11 +2,13 @@ use http_body_util::Full;
 use hyper::Response;
 use mysql::serde_json;
 use hyper::body::Bytes;
-pub fn return_token_object(token: String) -> Response<Full<Bytes>> {
+pub fn return_token_object(token: String,refresh_token:String) -> Response<Full<Bytes>> {
     let token_object = serde_json::json!({
         "access_token": token,
         "token_type": "Bearer",
-        "expires_in": 3600*24,
+        "refresh_token":refresh_token,
+        "token_expires_in": 3600*24,
+        "refresh_expires_in":3600*24*30,
         "scope": "read"
     });
     let body = Full::from(Bytes::from(token_object.to_string()));

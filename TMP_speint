@@ -1,6 +1,0 @@
-
-    let headers = request.headers().clone();
-    let mut response = Response::new(Full::new(Bytes::from("Hello, World!")));
-    *response.status_mut() = hyper::StatusCode::OK;
-    response.headers_mut().insert("Content-Type", "text/plain".parse().unwrap());
-    Ok(response)
