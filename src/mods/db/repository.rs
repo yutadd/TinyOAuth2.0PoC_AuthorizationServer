@@ -238,4 +238,36 @@ impl Repository {
         )?;
         Ok(user_id)
     }
+pub fn client_authentication(&self, client_id: &String, client_secret: &String) -> Result<bool, mysql::Error> {
+    let mut conn = self.pool.get_conn()?;
+    let stored_secret: Option<String> = conn.exec_first(
+        "SELECT client_secret FROM clients WHERE client_id = :client_id",
+        params! {
+            "client_id" => client_id,
+        },
+    )?;
+
+    match stored_secret {
+        Some(secret) => {println!("[repo]client authentication {}<=>{}",secret,client_secret);Ok(secret == *client_secret)},
+        None => Ok(false),
+    }
+}
+pub fn issue_token(&self, userid: String) -> Result<String, mysql::Error> {
+    let mut conn = self.pool.get_conn()?;
+    let token: String = rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(30)
+        .map(char::from)
+        .collect();
+    let expire_time = Utc::now().timestamp() + 3600*24; // 1 hour expiration time
+    conn.exec_drop(
+        "UPDATE users SET session_id = :session_id, session_expires_at = :expire_time WHERE id = :userid",
+        params! {
+            "session_id" => &token,
+            "expire_time" => expire_time,
+            "userid" => &userid,
+        },
+    )?;
+    Ok(token)
+}
 }

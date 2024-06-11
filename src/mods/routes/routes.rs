@@ -7,6 +7,7 @@ use http_body_util::Full;
 use hyper::body::Bytes;
 use hyper::{Request, Response, StatusCode};
 use std::convert::Infallible;
+use crate::mods::services::token::exchange_token;
 pub async fn hello(
     request: Request<hyper::body::Incoming>,
 ) -> Result<Response<Full<Bytes>>, Infallible> {
@@ -21,14 +22,13 @@ pub async fn hello(
             return Ok(ask_authorization(&request));
         } else if path == CONFIG.endpoints.act_authorization {
             return Ok(act_authorization(&request));
-        } else {
         }
     } else if method.as_str() == "POST" {
         if path == CONFIG.endpoints.act_login {
             return Ok(act_login(request).await);
-        } else {
+        } else if path==CONFIG.endpoints.exchange_token{
+            return Ok(exchange_token(request).await);
         }
-    } else {
     }
     println!("return 404 because path that the user requested is invalid.");
     Ok(return_error_page(StatusCode::NOT_FOUND, "path not found."))

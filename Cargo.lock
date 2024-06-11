@@ -2465,6 +2465,7 @@ dependencies = [
 name = "tiny_oauth2_poc_a11n_server"
 version = "0.0.1"
 dependencies = [
+ "base64 0.21.7",
  "bcrypt",
  "cargo-watch",
  "chrono",

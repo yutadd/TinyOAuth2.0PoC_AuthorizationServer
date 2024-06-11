@@ -5,6 +5,7 @@ pub struct Endpoints {
     pub ask_authorization: String,
     pub act_authorization: String,
     pub act_login: String,
+    pub exchange_token:String,
 }
 pub struct Db {
     pub username: String,
@@ -56,6 +57,7 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| {
         ask_authorization: "/ask/authorization".to_string(),
         act_authorization: "/act/authorization".to_string(),
         act_login: "/act/login".to_string(),
+        exchange_token:"/act/exchangeToken".to_string(),
     },
     db: Db {
         username: username.clone(),
